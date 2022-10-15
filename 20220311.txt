@@ -1,0 +1,255 @@
+网络基本概念:
+	1.网络 
+	  主机间数据共享、数据收发
+	  
+	2.协议
+	  通信双方约定的一套标准
+
+	3.国际标准
+	  OSI模型
+	  应用层			传输数据
+	  表示层			数据加密
+	  会话层			建立会话链接
+	  传输层			传输方式
+	  网络层			数据路由
+	  数据链路层		局域网通信
+	  物理层			物理介质链接
+	  
+	  TCP/IP模型
+	  应用层			传输数据 
+	  传输层			传输方式 
+	  网络层			数据路由
+	  网络接口层		物理介质链接 
+	  
+	4.每层协议:						《TCP/IP详解》《Unix环境高级编程》
+		应用层:						《The C Programing Language》
+			HTTP					《计算机网络》
+			FTP
+			TFTP
+			TELNET
+			SMTP
+			..
+		传输层:
+			TCP   传输控制协议
+			UDP   用户数据报协议
+			
+			UDP:不安全不可靠
+			    实现简单,资源开销小
+				
+			TCP:安全、可靠
+				实现复杂,资源开销大
+				
+			通信前使用三次握手建立连接
+				发端: SYN
+				收端: ACK + SYN
+				发端: ACK
+				
+			通信过程中通过序列号和确认号保障数据传输的完整性
+			
+			通信结束使用四次挥手断开连接
+				主动结束: FIN
+				被动结束: ACK
+				被动结束: FIN
+				主动结束: ACK 
+				保障数据在断开时传输的完整性
+				
+		网络层协议:
+			1.IPv4
+			  192.168.1.64
+			  11000000.10101000.00000001.01000000
+			  
+			  255.255.255.0
+			  11111111.11111111.11111111.00000000
+			  
+			  IP地址 = 网络位 + 主机位
+			  
+			2.子网掩码
+				区分IP地址的网络位和主机位(必须搭配IP地址使用)
+				子网掩码是1的部分对应IP地址网络位
+				子网掩码是0的部分对应IP地址主机位
+				
+			3.网段号、广播号
+				网段号:用来标识一个局域网的编号
+					IP地址网络位不变,主机位全为0即为该IP地址所在网段
+				
+				广播号:向广播号发送数据,所有局域网内的IP地址均可收到信息
+					IP地址网络位不变,主机位全为1即为该IP地址的广播号
+					
+				192.168.1.64
+				255.255.255.0
+				
+				192.168.1.0
+				192.168.1.255
+	  
+			4.网段内可用的IP地址:
+				2^主机位 - 2 
+				
+			5.IP地址划分：
+				
+				A类:1.0.0.0 - 126.255.255.255
+					子网掩码:255.0.0.0
+					管理超大规模型网络
+				
+				私有IP地址:10.0.0.0 - 10.255.255.255
+				
+				B类:128.0.0.0 - 191.255.255.255
+					子网掩码:255.255.0.0
+					管理大中规模型网络
+					
+				私有IP地址:172.16.0.0 - 172.31.255.255
+				
+				C类:192.0.0.0 - 223.255.255.255
+					子网掩码:255.255.255.0
+					管理中小规模型网络
+					
+				私有IP地址:192.168.0.0 - 192.168.255.255
+				
+				D类:224.0.0.0 - 239.255.255.255
+					用于广播和组播
+				
+				E类:240.255.255.255 - 255.255.255.254
+					用于实验
+
+				公有地址:能够直接上网的IP地址
+				私有地址:需要经过路由器做IP地址转换
+
+			IP地址:能够帮助找到局域网
+			MAC地址:实现局域网内部通信
+			网卡地址
+			端口号:区分主机上不同的应用程序
+
+	5.命令:
+		1.ifconfig
+		  查看网卡信息
+		  
+		  ifconfig -a 
+		  ifconfig 网卡名 IP地址/子网掩码 up
+		  ifconfig eth0 192.168.1.64/24 up 
+		  ifconfig 网卡名 up/down 
+		  
+		2.ping 
+		  ping IP地址
+		  测试与IP地址是否连通
+		  
+		3.配置IP地址:
+			(1)将虚拟机链接模式设置为桥接模式:
+				点击"虚拟机"
+				点击"设置"
+				点击"网络适配器"
+				选择"桥接模式"
+				点击"确定"
+				
+			(2)将虚拟机桥接网卡设置为无线网卡
+				点击"编辑"
+				点击"虚拟网络编辑器"
+				点击"更改设置"
+				将VM0网卡桥接到无线网卡
+				点击"应用"
+				点击"确定"
+				
+			(3)修改虚拟机中网络配置
+				sudo vim /etc/network/interfaces
+				将文件内容改为如下形式
+				auto lo
+				iface lo loopback 
+				
+				auto ens33
+				iface ens33 inet dhcp 
+				
+				注意:网卡名 Ubuntu64为ens33  Ubuntu32为eth0 
+				
+			(4)重启网络配置
+				sudo /etc/init.d/networking restart
+
+			(5)查看IP地址
+				ifconfig
+			
+			(6)测试网络是否连通
+				ping 192.168.1.1
+				ping 192.168.1.64
+				ping www.baidu.com
+				
+	6.UDP编程
+		套接字:通信对象的抽象
+		(1)socket 
+		   int socket(int domain, int type, int protocol);
+		   功能:
+				创建一个用来通信的套接字文件描述符
+		   参数:
+				domain:通信域		AF_INET		IPv4协议
+				type:
+					SOCK_DGRAM		用户数据报套接字		UDP		
+					SOCK_STREAM		流式套接字				TCP
+					SOCK_RAW		原始套接字		
+				protocol:
+					默认为0 
+		   返回值:
+				成功返回新文件描述符
+				失败返回-1 
+				
+		(2)sendto 
+		   ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+		   功能:
+				发送消息
+		   参数:
+				sockfd:套接字文件描述符
+				buf:发送数据空间首地址
+				len:发送数据的长度
+				flags:发送属性(默认为0)
+				dest_addr:目的地址
+				addrlen:目的地址的长度
+		   返回值：
+				成功返回发送字节数,失败返回-1 
+
+			IPV4地址类型可以通过man 7 ip查看
+			
+			struct sockaddr_in {
+				sa_family_t    sin_family; /* address family: AF_INET */协议族
+				in_port_t      sin_port;   /* port in network byte order */端口
+				struct in_addr sin_addr;   /* internet address */ip地址
+			};
+
+			/* Internet address. */
+			struct in_addr {
+			   uint32_t       s_addr;     /* address in network byte order */
+			};
+
+		(3)htons
+		   uint16_t htons(uint16_t hostshort);
+		   功能:
+			将本地字节序转换为网络字节序
+		
+		(4)inet_addr
+		   in_addr_t inet_addr(const char *cp);
+		   功能:
+			将字符串IP地址转换为二进制IP地址
+
+		(5)bind
+		   int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+		   功能:
+				将IP地址和套接字绑定
+		   参数:
+				sockfd:套接字文件描述符
+				addr:IP地址空间首地址
+				addrlen:IP地址长度
+		   返回值:
+				成功返回0
+				失败返回-1 
+
+		(6)recvfrom
+		   ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+                        struct sockaddr *src_addr, socklen_t *addrlen);
+		   功能:
+				接收数据
+		   参数:
+				sockfd:套接字文件描述符
+				buf:存放数据空间首地址
+				len:最多存放数据的个数
+				flags:属性默认为0 
+				src_addr:存放发送方IP地址空间首地址
+				addrlen:想要接收IP地址的长度
+		   返回值:
+				成功返回实际读取字节数
+				失败返回-1 
+
